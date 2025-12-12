@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mods | MCPE-Source</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: #222; color: #eee; }
+        .mod-row { display: flex; flex-wrap: wrap; margin-left: -5px; margin-right: -5px; }
+        .mod-item { display: flex; margin-bottom: 10px; padding-left: 5px; padding-right: 5px; }
+        .mod-card {
+            display: flex; flex-direction: column; width: 100%;
+            text-decoration: none !important; color: #dcdcdc;
+            background-color: rgba(43, 43, 43, 0.75);
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+            border: 1px solid #444; border-radius: 4px; transition: all 0.3s ease;
+        }
+        .mod-card:hover, .mod-card:focus {
+            color: #ffffff; background-color: rgba(60, 60, 60, 0.9);
+            border-color: #777; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transform: translateY(-2px);
+        }
+        .mod-card img {
+            width: 100%; height: 180px; object-fit: cover;
+            border-top-left-radius: 3px; border-top-right-radius: 3px; background-color: #1a1a1a;
+        }
+        .mod-card .caption { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; }
+        .mod-card h3 { color: #ffffff; margin-top: 0; margin-bottom: 8px; font-size: 18px; line-height: 1.2; }
+        .mod-card h3 small { color: #bbbbbb; margin-left: 5px; font-size: 70%; }
+        .mod-card p { color: #cccccc; flex-grow: 1; font-size: 13px; margin-bottom: 10px; }
+        .tags-container { margin-top: auto; }
+        .mod-card .label-default { background-color: #555; font-size: 10px; border: 1px solid #666; margin-right: 2px; display: inline-block; margin-bottom: 2px; padding: 3px 6px; }
+        .controls-area { background-color: rgba(30, 30, 30, 0.5); padding: 8px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #333; }
+        .controls-area .row { margin-left: -5px; margin-right: -5px; }
+        .controls-area [class*="col-"] { padding-left: 5px; padding-right: 5px; margin-bottom: 0; }
+        .filter-elem { margin-bottom: 5px; }
+        .form-control { background-color: #333; border: 1px solid #555; color: #fff; height: 34px; font-size: 13px; }
+        .form-control:focus { border-color: #777; background-color: #444; box-shadow: none; }
+        @media (min-width: 992px) { .filter-elem { margin-bottom: 0; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-inverse navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html"><img src="logo.png" width="150px" alt="Logo"></a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="maps.html">Maps</a></li>
+                    <li class="active"><a href="mods.html">Mods</a></li>
+                    <li><a href="textures.html">Textures</a></li>
+                    <li><a href="plugins.html">Plugins</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="help.html">Help</a></li>
+                    <li><a href="android_app.html" class="suggest-content-btn">Android app</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 style="margin-top: 10px;">Mods</h1>
+        
+        <div class="controls-area">
+            <div class="row">
+                <div class="col-md-4 col-sm-6 col-xs-12 filter-elem">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search mods...">
+                </div>
+                <div class="col-md-4 col-sm-6 col-xs-12 filter-elem">
+                    <select class="form-control" id="versionSelect"><option value="">All Versions</option></select>
+                </div>
+                <div class="col-md-4 col-sm-6 col-xs-12 filter-elem">
+                    <select class="form-control" id="typeSelect"><option value="">All Mod Types</option></select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mod-row" id="modsList"></div>
+    </div>
+
+    <br><br><br>
+    <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden;"></iframe>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var repo = 'mods';
+            var baseUrl = 'https://raw.githubusercontent.com/MCPE-Source/' + repo + '/main/';
+            var url = baseUrl + repo + '.json?t=' + new Date().getTime();
+
+            $.getJSON(url, function(data) {
+                var mappedData = data.map(function(item, index) {
+                    return { item: item, originalIndex: index };
+                });
+
+                mappedData.sort(function(a, b) {
+                    var dateA = new Date(a.item.date ? a.item.date.replace(' ', 'T') : 0);
+                    var dateB = new Date(b.item.date ? b.item.date.replace(' ', 'T') : 0);
+                    return dateB - dateA;
+                });
+
+                var $container = $('#modsList');
+                var versions = new Set();
+                var modTypes = new Set();
+
+                $.each(mappedData, function(i, mapObj) {
+                    var mod = mapObj.item;
+                    var originalId = mapObj.originalIndex;
+
+                    if(mod.version) versions.add(mod.version);
+                    if(mod.mod_type) modTypes.add(mod.mod_type);
+                    
+                    var tagsHtml = '';
+                    if (mod.tags && mod.tags.length > 0) {
+                        mod.tags.forEach(function(tag) {
+                            tagsHtml += '<span class="label label-default">' + tag + '</span> ';
+                        });
+                    }
+
+                    var imgSrc = 'assets/images/no_thumbnail.png';
+                    if (mod.thumbnail) {
+                         imgSrc = mod.thumbnail.startsWith('http') ? mod.thumbnail : baseUrl + mod.thumbnail;
+                    }
+                    
+                    var linkUrl = 'item.html?type=' + repo + '&id=' + originalId;
+                    var currentModType = mod.mod_type || "";
+
+                    var html = `
+                        <div class="col-sm-6 col-md-4 mod-item">
+                            <a href="${linkUrl}" class="mod-card" data-version="${mod.version}" data-modtype="${currentModType}">
+                                <img src="${imgSrc}" alt="${mod.title}">
+                                <div class="caption">
+                                    <h3>${mod.title} <small>${mod.version}</small></h3>
+                                    <p>${mod.short_description || mod.description || ''}</p>
+                                    <div class="tags-container">${tagsHtml}</div>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                    $container.append(html);
+                });
+
+                var $verSelect = $('#versionSelect');
+                var $typeSelect = $('#typeSelect');
+
+                Array.from(versions).sort().reverse().forEach(v => $verSelect.append('<option value="' + v + '">' + v + '</option>'));
+                Array.from(modTypes).sort().forEach(t => $typeSelect.append('<option value="' + t + '">' + t + '</option>'));
+
+                function filterMods() {
+                    var searchText = $('#searchInput').val().toLowerCase();
+                    var activeVer = $('#versionSelect').val();
+                    var activeType = $('#typeSelect').val();
+
+                    $('.mod-item').each(function() {
+                        var $el = $(this);
+                        var $card = $el.find('.mod-card');
+                        var fullText = $card.find('h3').text().toLowerCase() + " " + $card.find('p').text().toLowerCase();
+                        var itemVer = $card.attr('data-version');
+                        var itemType = $card.attr('data-modtype');
+
+                        var matchSearch = fullText.indexOf(searchText) > -1;
+                        var matchVer = !activeVer || itemVer === activeVer;
+                        var matchType = !activeType || itemType === activeType;
+
+                        if (matchSearch && matchVer && matchType) $el.show(); else $el.hide();
+                    });
+                }
+                $('#searchInput').on('input keyup', filterMods);
+                $('#versionSelect, #typeSelect').on('change', filterMods);
+            });
+        });
+    </script>
+</body>
+</html>

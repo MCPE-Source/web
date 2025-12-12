@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading... | MCPE-Source</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { background-color: #222; color: #eee; }
+        
+        .breadcrumb {
+            background-color: #333;
+            border-radius: 4px;
+        }
+
+        .glass-panel {
+            background-color: rgba(43, 43, 43, 0.75);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .gallery-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .gallery-item {
+            flex: 1 1 30%;
+            min-width: 100px;
+            height: 120px;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #555;
+            cursor: pointer;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .gallery-item:hover img { transform: scale(1.1); }
+
+        .btn-download-lg {
+            background-color: #5cb85c; border: 1px solid #4cae4c; color: #fff;
+            font-size: 18px; font-weight: bold; padding: 12px; width: 100%;
+            display: block; text-align: center; border-radius: 4px; margin-bottom: 10px;
+        }
+        .btn-download-lg:hover { background-color: #4cae4c; color: white; text-decoration: none; }
+        
+        .info-table { width: 100%; }
+        .info-table td { padding: 8px 0; border-bottom: 1px solid #333; color: #ccc; vertical-align: middle; }
+        .info-label { font-weight: bold; color: #888; width: 40%; }
+        
+        .author-block { display: flex; align-items: center; gap: 10px; }
+        .author-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #555; margin-right: 8px; }
+
+        .label-custom {
+            background-color: #333; border: 1px solid #555; margin-right: 4px;
+            font-size: 11px; padding: 4px 8px; display: inline-block; margin-bottom: 5px;
+        }
+
+        #custom-modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.95);
+            align-items: center; justify-content: center;
+        }
+        #custom-modal.active { display: flex; }
+        .modal-image { max-width: 90%; max-height: 80vh; border-radius: 4px; }
+        .modal-close-btn { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 40px; cursor: pointer; }
+
+        @media (max-width: 991px) {
+            .sidebar-col { margin-bottom: 20px; }
+            .main-col { order: 2; }
+            .sidebar-col { order: 1; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-inverse navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html"><img src="logo.png" width="150px"></a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="maps.html">Maps</a></li>
+                    <li><a href="mods.html">Mods</a></li>
+                    <li><a href="textures.html">Textures</a></li>
+                    <li><a href="plugins.html">Plugins</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" id="content-container" style="display:none;">
+        <ol class="breadcrumb">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#" id="bread-category">Category</a></li>
+            <li class="active" id="bread-title">Loading...</li>
+        </ol>
+
+        <div class="row">
+            <div class="col-md-4 col-md-push-8 sidebar-col">
+                <div class="glass-panel">
+                    <a href="#" id="download-btn" class="btn btn-download-lg" target="_blank">
+                        <span class="glyphicon glyphicon-download-alt"></span> Download
+                    </a>
+                    <button class="btn btn-default btn-block" onclick="sharePage()">
+                        <span class="glyphicon glyphicon-share-alt"></span> Share
+                    </button>
+
+                    <hr style="border-color: #444; margin: 15px 0;">
+
+                    <table class="info-table" id="details-table">
+                        <tr><td class="info-label">Version</td><td id="info-version">-</td></tr>
+                        <tr><td class="info-label">Uploader</td><td id="info-author">-</td></tr>
+                        <tr><td class="info-label">Date</td><td id="info-date">-</td></tr>
+                    </table>
+                    
+                    <div style="margin-top: 15px;" id="tags-wrapper"></div>
+                </div>
+            </div>
+
+            <div class="col-md-8 col-md-pull-4 main-col">
+                <div class="glass-panel">
+                    <h1><span id="main-title">Title</span> <small id="main-version">v</small></h1>
+                    <div class="description-text" style="font-size: 14px; line-height: 1.6; color: #ccc;">
+                        <p id="main-desc">Description goes here.</p>
+                    </div>
+
+                    <h3 style="margin-top: 30px; border-bottom: 1px solid #444; padding-bottom: 10px;">Gallery</h3>
+                    <div class="gallery-grid" id="gallery-wrapper">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="error-container" class="container" style="display:none; text-align:center; padding-top: 50px;">
+        <h1>404</h1>
+        <p>Content not found.</p>
+        <a href="index.html" class="btn btn-primary">Go Home</a>
+    </div>
+
+    <div id="custom-modal">
+        <span class="modal-close-btn">&times;</span>
+        <img class="modal-image" id="modal-image-content">
+    </div>
+
+    <br><br>
+    <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden;"></iframe>
+    
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                type: params.get('type'), 
+                id: parseInt(params.get('id')) 
+            };
+        }
+
+        $(document).ready(function() {
+            const params = getQueryParams();
+
+            if (!params.type || isNaN(params.id)) {
+                $('#error-container').show();
+                return;
+            }
+
+            $('#bread-category').text(params.type.charAt(0).toUpperCase() + params.type.slice(1));
+            $('#bread-category').attr('href', params.type + '.html');
+
+            const repo = params.type;
+            const baseUrl = 'https://raw.githubusercontent.com/MCPE-Source/' + repo + '/main/';
+            const jsonUrl = baseUrl + repo + '.json?t=' + new Date().getTime();
+
+            $.getJSON(jsonUrl, function(data) {
+                const item = data[params.id];
+
+                if (item) {
+                    document.title = item.title + ' | MCPE-Source';
+                    $('#main-title').text(item.title);
+                    $('#bread-title').text(item.title);
+                    $('#main-version').text(item.version);
+                    
+                    let description = item.full_description || item.description || item.short_description || "No description provided.";
+                    description = description.replace(/\n/g, "<br>");
+                    $('#main-desc').html(description);
+                    
+                    $('#info-version').text(item.version);
+                    $('#info-date').text(item.date || "-");
+
+                    let authorHtml = '<span class="text-muted">Unknown</span>';
+                    if (item.author) {
+                        let name = "Unknown";
+                        let avatar = "assets/images/no_thumbnail.png";
+                        
+                        if (typeof item.author === 'object') {
+                            name = item.author.name || "Unknown";
+                            avatar = item.author.avatar || avatar;
+                        } else {
+                            name = item.author;
+                        }
+                        
+                        authorHtml = `
+                            <div class="author-block">
+                                <img src="${avatar}" class="author-avatar" alt="">
+                                <span>${name}</span>
+                            </div>
+                        `;
+                    }
+                    $('#info-author').html(authorHtml);
+
+                    const $table = $('#details-table');
+                    
+                    if (repo === 'mods') {
+                        if (item.mod_type) {
+                            $table.append(`<tr><td class="info-label">Mod Type</td><td>${item.mod_type}</td></tr>`);
+                        }
+                    } else if (repo === 'plugins') {
+                        if (item.core) {
+                             $table.append(`<tr><td class="info-label">Core</td><td>${item.core}</td></tr>`);
+                        }
+                        if (item.php_version) {
+                             $table.append(`<tr><td class="info-label">PHP Version</td><td>${item.php_version}</td></tr>`);
+                        }
+                    }
+
+                    let downloadLink = item.alt_link || item.file;
+                    if(item.file && !item.file.startsWith("http")) {
+                        downloadLink = baseUrl + item.file;
+                    }
+                    if(item.alt_link) downloadLink = item.alt_link;
+
+                    if (downloadLink && downloadLink !== "#") {
+                        $('#download-btn').attr('href', downloadLink);
+                    } else {
+                        $('#download-btn').addClass('disabled').text('No Download');
+                    }
+
+                    if (item.tags) {
+                        item.tags.forEach(tag => {
+                            $('#tags-wrapper').append(`<span class="label label-custom">${tag}</span> `);
+                        });
+                    }
+
+                    let images = [];
+                    if (item.screenshots && item.screenshots.length > 0) {
+                        images = item.screenshots;
+                    } else if (item.gallery && item.gallery.length > 0) {
+                        images = item.gallery;
+                    }
+
+                    if (images.length > 0) {
+                        images.forEach(imgSrc => {
+                            let fullImgUrl = imgSrc.startsWith('http') ? imgSrc : baseUrl + imgSrc;
+                            $('#gallery-wrapper').append(`
+                                <div class="gallery-item">
+                                    <img src="${fullImgUrl}" alt="Screenshot">
+                                </div>
+                            `);
+                        });
+                    } else if (item.thumbnail) {
+                        let thumbUrl = item.thumbnail.startsWith('http') ? item.thumbnail : baseUrl + item.thumbnail;
+                         $('#gallery-wrapper').append(`
+                                <div class="gallery-item">
+                                    <img src="${thumbUrl}" alt="Thumbnail">
+                                </div>
+                            `);
+                    } else {
+                        $('#gallery-wrapper').html('<p class="text-muted">No images available.</p>');
+                    }
+
+                    $('#content-container').fadeIn();
+                    initModal();
+
+                } else {
+                    $('#error-container').show();
+                }
+            }).fail(function() {
+                $('#error-container').html('<h1>Error</h1><p>Could not load database file.</p>').show();
+            });
+        });
+
+        function sharePage() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url);
+            alert("Link copied to clipboard!");
+        }
+
+        function initModal() {
+            const modal = $('#custom-modal');
+            const modalImg = $('#modal-image-content');
+            
+            $('.gallery-item').on('click', function() {
+                const src = $(this).find('img').attr('src');
+                modalImg.attr('src', src);
+                modal.addClass('active');
+            });
+
+            $('.modal-close-btn, #custom-modal').on('click', function(e) {
+                if (e.target !== modalImg[0]) {
+                    modal.removeClass('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
