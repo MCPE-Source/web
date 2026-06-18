@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Content | MCPE-Source</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('minecraft.ttf') format('truetype');
+        }
+        body {
+            background-image: url("bg.png") !important;
+            background-color: #1b1b1b !important;
+            color: #dcdcdc !important;
+        }
+        .navbar {
+            background-image: url("nav_bg.png") !important;
+            height: 48px !important;
+        }
+        .navbar-inverse .navbar-nav > .active > a {
+            background-color: transparent !important;
+            font-weight: bold;
+        }
+        .navbar-nav > .dropdown:hover > a, 
+        .navbar-nav > .dropdown.open > a {
+            background-color: transparent !important;
+        }
+        .navbar-toggle {
+            border-color: #ddd;
+        }
+        .navbar-toggle:hover,
+        .navbar-toggle:focus {
+            background-color: #333;
+        }
+        .navbar-toggle .icon-bar {
+            background-color: #ddd;
+        }
+        @media (max-width: 767px) {
+            .navbar-collapse {
+                background-color: rgba(34, 34, 34, 0.95) !important;
+                border-top: 1px solid #333;
+                margin-top: 10px;
+                padding: 0;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+                z-index: 9999 !important;
+                position: relative;
+            }
+            .navbar-nav {
+                margin: 0;
+            }
+            .navbar-nav > li > a {
+                padding: 15px;
+                border-bottom: 1px solid #333;
+                background-color: rgba(34, 34, 34, 0.9) !important;
+            }
+            .navbar-nav > li > a:hover,
+            .navbar-nav > li > a:focus {
+                background-color: rgba(62, 52, 52, 0.9) !important;
+            }
+            .navbar-nav > li:last-child > a {
+                border-bottom: none;
+            }
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #555;
+        }
+        .suggest-content-btn {
+            color: #4caf50 !important;
+        }
+        code {
+            background-color: #333 !important;
+            color: #dcdcdc !important;
+        }
+        .hidden { display: none !important; }
+        .form-control { background-color: #333; color: #fff; border: 1px solid #555; }
+        .form-control:focus { background-color: #444; color: #fff; border-color: #888; }
+        .text-danger { color: #ff4d4d !important; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html"><img src="logo.png" width="150px"></a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="maps.html">Maps</a></li>
+                    <li><a href="mods.html">Mods</a></li>
+                    <li><a href="textures.html">Textures</a></li>
+                    <li><a href="plugins.html">Plugins</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="active"><a href="upload.html" class="suggest-content-btn">Upload Content</a></li>
+                    <li><a href="profile.html"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
+                    <li><a href="help.html">Help</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 id="page-title">Upload Content</h2><hr>
+        
+        <div id="auth-warning" class="alert alert-warning" style="background-color: #333; border-color: #555; color: #dcdcdc;">
+            <h4>Authentication Required</h4>
+            <p>To upload files, provide a GitHub Personal Access Token with <code>repo</code> scope. It is stored locally in your browser.</p>
+            <div class="form-group mt-2" style="margin-top: 15px;">
+                <input type="password" id="gh-token-input" class="form-control" placeholder="ghp_xxxxxxxxxxxx">
+            </div>
+            <button class="btn btn-info" onclick="saveToken()">Save Token</button>
+        </div>
+
+        <div id="auth-success" class="alert alert-success hidden" style="background-color: #2b542c; border-color: #1e3c1f; color: #dcdcdc;">
+            Logged in as <strong id="logged-user-name"></strong>. <a href="#" onclick="logout()" style="color: #ffaaaa;">Logout</a>
+        </div>
+
+        <form id="upload-form" class="hidden" style="background: #222; padding: 20px; border-radius: 4px; border: 1px solid #444; margin-bottom: 40px;">
+            <div class="form-group">
+                <label>Content Type <span class="text-danger" id="req-type">*</span></label>
+                <select class="form-control" id="up-type" required onchange="toggleFormFields()">
+                    <option value="maps">Map</option>
+                    <option value="plugins">Plugin</option>
+                    <option value="mods">Mod</option>
+                    <option value="textures">Texture</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Title <span class="text-danger" id="req-title">*</span></label>
+                <input type="text" class="form-control" id="up-title" required>
+            </div>
+            <div class="form-group">
+                <label>Version (MCPE) <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="up-version" placeholder="0.16.0, 0.15.0" required>
+            </div>
+            <div class="form-group">
+                <label>Short Description <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="up-short-desc" required>
+            </div>
+            <div class="form-group">
+                <label>Full Description</label>
+                <textarea class="form-control" id="up-full-desc" rows="5"></textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-6 form-group hidden" id="field-core">
+                    <label>Core</label>
+                    <select class="form-control" id="up-core">
+                        <option value="PocketMine-MP">PocketMine-MP</option>
+                        <option value="Nukkit">Nukkit</option>
+                        <option value="NostalgiaCore">NostalgiaCore</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-6 form-group hidden" id="field-php">
+                    <label>PHP Version</label>
+                    <select class="form-control" id="up-php">
+                        <option value="PHP 7">PHP 7</option>
+                        <option value="PHP 8">PHP 8</option>
+                        <option value="PHP 5">PHP 5</option>
+                    </select>
+                </div>
+                <div class="col-md-6 form-group hidden" id="field-modtype">
+                    <label>Mod Type</label>
+                    <select class="form-control" id="up-modtype">
+                        <option value="PTPatch">PTPatch</option>
+                        <option value="BL Native Addon">BL Native Addon</option>
+                        <option value="Script">Script</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label id="lbl-file">File (max 25MB) <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="up-file" required style="padding-bottom: 40px;">
+            </div>
+            <div class="form-group">
+                <label id="lbl-images">Images (First is thumbnail, max 5) <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="up-images" accept="image/*" multiple style="padding-bottom: 40px;">
+            </div>
+            <div class="row">
+                <div class="col-md-4 form-group">
+                    <label>Alternative Download Link</label>
+                    <input type="url" class="form-control" id="up-alt-link">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label>Original Link</label>
+                    <input type="url" class="form-control" id="up-orig-link">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label>License</label>
+                    <input type="text" class="form-control" id="up-license">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="btn-submit">Submit via Pull Request</button>
+            <div id="upload-status" style="margin-top: 15px; color: #5bc0de; font-family: monospace;"></div>
+        </form>
+    </div>
+
+    <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden; display: block; margin-top: auto;"></iframe>
+    
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        let githubToken = localStorage.getItem('gh_pat');
+        let userInfo = null;
+        let isEditMode = false;
+        let oldItemData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            initEditMode();
+            document.getElementById('upload-form').addEventListener('submit', handleUpload);
+        });
+
+        function initEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('edit') === 'true') {
+                isEditMode = true;
+                const eType = urlParams.get('type');
+                const eTitle = urlParams.get('title');
+                
+                document.getElementById('page-title').innerText = 'Edit Content';
+                document.getElementById('up-type').value = eType;
+                document.getElementById('up-type').disabled = true;
+                document.getElementById('req-type').classList.add('hidden');
+                
+                document.getElementById('up-title').value = eTitle;
+                document.getElementById('up-title').disabled = true;
+                document.getElementById('req-title').classList.add('hidden');
+                
+                document.getElementById('btn-submit').innerText = 'Update via Pull Request';
+
+                fetch(`https://raw.githubusercontent.com/MCPE-Source/${eType}/main/${eType}.json`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const item = data.find(i => i.title === eTitle);
+                        if (item) {
+                            oldItemData = item;
+                            document.getElementById('up-version').value = item.version || '';
+                            document.getElementById('up-short-desc').value = item.short_description || '';
+                            document.getElementById('up-full-desc').value = item.full_description || '';
+                            document.getElementById('up-alt-link').value = item.alt_link || '';
+                            document.getElementById('up-orig-link').value = item.original_link || '';
+                            document.getElementById('up-license').value = item.license || '';
+
+                            if (eType === 'plugins') {
+                                document.getElementById('up-core').value = item.core || 'PocketMine-MP';
+                                document.getElementById('up-php').value = item.php_version || 'PHP 7';
+                            } else if (eType === 'mods') {
+                                document.getElementById('up-modtype').value = item.mod_type || 'Other';
+                            }
+
+                            document.getElementById('up-file').removeAttribute('required');
+                            document.getElementById('lbl-file').innerHTML = 'File (Leave empty to keep current)';
+                            
+                            document.getElementById('up-images').removeAttribute('required');
+                            document.getElementById('lbl-images').innerHTML = 'Images (Leave empty to keep current)';
+                            
+                            toggleFormFields();
+                        }
+                    });
+            } else {
+                toggleFormFields();
+            }
+        }
+
+        async function checkAuth() {
+            if (githubToken) {
+                try {
+                    const res = await fetch('https://api.github.com/user', {
+                        headers: { 'Authorization': `token ${githubToken}` }
+                    });
+                    if (res.ok) {
+                        userInfo = await res.json();
+                        document.getElementById('logged-user-name').innerText = userInfo.login;
+                        document.getElementById('auth-warning').classList.add('hidden');
+                        document.getElementById('auth-success').classList.remove('hidden');
+                        document.getElementById('upload-form').classList.remove('hidden');
+                        return;
+                    }
+                } catch (e) {}
+            }
+            document.getElementById('auth-warning').classList.remove('hidden');
+            document.getElementById('auth-success').classList.add('hidden');
+            document.getElementById('upload-form').classList.add('hidden');
+        }
+
+        function saveToken() {
+            const val = document.getElementById('gh-token-input').value.trim();
+            if (val) {
+                localStorage.setItem('gh_pat', val);
+                githubToken = val;
+                checkAuth();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('gh_pat');
+            githubToken = null;
+            userInfo = null;
+            document.getElementById('gh-token-input').value = '';
+            checkAuth();
+        }
+
+        function toggleFormFields() {
+            const type = isEditMode ? new URLSearchParams(window.location.search).get('type') : document.getElementById('up-type').value;
+            const imagesInput = document.getElementById('up-images');
+            const imagesLabel = document.getElementById('lbl-images');
+            
+            document.getElementById('field-core').classList.add('hidden');
+            document.getElementById('field-php').classList.add('hidden');
+            document.getElementById('field-modtype').classList.add('hidden');
+
+            if (type === 'plugins') {
+                document.getElementById('field-core').classList.remove('hidden');
+                document.getElementById('field-php').classList.remove('hidden');
+                imagesInput.removeAttribute('required');
+                imagesLabel.innerHTML = isEditMode ? 'Images (Leave empty to keep current)' : 'Images (First is thumbnail, max 5)';
+            } else if (type === 'mods') {
+                document.getElementById('field-modtype').classList.remove('hidden');
+                imagesInput.removeAttribute('required');
+                imagesLabel.innerHTML = isEditMode ? 'Images (Leave empty to keep current)' : 'Images (First is thumbnail, max 5)';
+            } else {
+                if (!isEditMode) {
+                    imagesInput.setAttribute('required', 'required');
+                    imagesLabel.innerHTML = 'Images (First is thumbnail, max 5) <span class="text-danger">*</span>';
+                }
+            }
+        }
+
+        const fileToBase64 = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+
+        const utf8ToBase64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
+        const base64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
+
+        async function handleUpload(e) {
+            e.preventDefault();
+            const statusEl = document.getElementById('upload-status');
+            const btnSubmit = document.getElementById('btn-submit');
+            btnSubmit.disabled = true;
+            
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const type = isEditMode ? urlParams.get('type') : document.getElementById('up-type').value;
+                const title = isEditMode ? urlParams.get('title') : document.getElementById('up-title').value;
+                const versionStr = document.getElementById('up-version').value;
+                const fileInput = document.getElementById('up-file');
+                const imagesInput = document.getElementById('up-images');
+                
+                const reqHeaders = {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                };
+
+                statusEl.innerText = "[1/5] Forking repository...";
+                const forkRes = await fetch(`https://api.github.com/repos/MCPE-Source/${type}/forks`, {
+                    method: 'POST', headers: reqHeaders
+                });
+                const forkData = await forkRes.json();
+                const userRepo = forkData.full_name;
+                
+                await new Promise(r => setTimeout(r, 4000));
+
+                const versionFolder = versionStr.replace(/ /g, '_');
+                const basePath = `data/${versionFolder}/${title}`;
+                let thumbPath = '';
+                let fileDestPath = '';
+                let screenshots = [];
+
+                if (imagesInput.files.length > 0) {
+                    statusEl.innerText = "[2/5] Uploading images...";
+                    for (let i = 0; i < Math.min(imagesInput.files.length, 5); i++) {
+                        const file = imagesInput.files[i];
+                        const b64 = await fileToBase64(file);
+                        const isThumb = (i === 0);
+                        const path = `${basePath}/${isThumb ? 'thumb' : 'screen_' + i}_${Date.now()}.jpg`;
+                        
+                        await fetch(`https://api.github.com/repos/${userRepo}/contents/${path}`, {
+                            method: 'PUT',
+                            headers: reqHeaders,
+                            body: JSON.stringify({ message: `Upload image ${path}`, content: b64 })
+                        });
+                        
+                        if (isThumb) thumbPath = path;
+                        else screenshots.push(path);
+                    }
+                }
+
+                if (fileInput.files.length > 0) {
+                    statusEl.innerText = "[3/5] Uploading content file...";
+                    const file = fileInput.files[0];
+                    const b64 = await fileToBase64(file);
+                    const ext = file.name.substring(file.name.lastIndexOf('.'));
+                    fileDestPath = `${basePath}/${title}${ext}`;
+                    
+                    await fetch(`https://api.github.com/repos/${userRepo}/contents/${fileDestPath}`, {
+                        method: 'PUT',
+                        headers: reqHeaders,
+                        body: JSON.stringify({ message: `Upload file ${fileDestPath}`, content: b64 })
+                    });
+                }
+
+                statusEl.innerText = "[4/5] Updating index...";
+                const indexUrl = `https://api.github.com/repos/${userRepo}/contents/${type}.json`;
+                const indexRes = await fetch(indexUrl, { headers: reqHeaders });
+                const indexData = await indexRes.json();
+                
+                const currentArray = JSON.parse(base64ToUtf8(indexData.content.replace(/\n/g, '')));
+                
+                const newItem = {
+                    title: title,
+                    version: versionStr,
+                    short_description: document.getElementById('up-short-desc').value,
+                    full_description: document.getElementById('up-full-desc').value,
+                    date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                    type: type,
+                    author: { name: userInfo.login, avatar: userInfo.avatar_url }
+                };
+
+                if (thumbPath) newItem.thumbnail = thumbPath;
+                if (fileDestPath) newItem.file = fileDestPath;
+                if (screenshots.length > 0) newItem.screenshots = screenshots;
+                
+                const altLink = document.getElementById('up-alt-link').value;
+                const origLink = document.getElementById('up-orig-link').value;
+                const license = document.getElementById('up-license').value;
+                if (altLink) newItem.alt_link = altLink;
+                if (origLink) newItem.original_link = origLink;
+                if (license) newItem.license = license;
+
+                if (type === 'plugins') {
+                    newItem.core = document.getElementById('up-core').value;
+                    newItem.php_version = document.getElementById('up-php').value;
+                } else if (type === 'mods') {
+                    newItem.mod_type = document.getElementById('up-modtype').value;
+                }
+
+                if (isEditMode) {
+                    const index = currentArray.findIndex(i => i.title === oldItemData.title);
+                    if (index !== -1) {
+                        if (!fileDestPath && oldItemData.file) newItem.file = oldItemData.file;
+                        if (!thumbPath && oldItemData.thumbnail) newItem.thumbnail = oldItemData.thumbnail;
+                        if (screenshots.length === 0 && oldItemData.screenshots) newItem.screenshots = oldItemData.screenshots;
+                        newItem.date = oldItemData.date;
+                        newItem.updated_date = new Date().toISOString().slice(0, 16).replace('T', ' ');
+                        currentArray[index] = newItem;
+                    }
+                } else {
+                    currentArray.push(newItem);
+                }
+
+                await fetch(indexUrl, {
+                    method: 'PUT',
+                    headers: reqHeaders,
+                    body: JSON.stringify({
+                        message: (isEditMode ? `Update ${title}` : `Add ${title}`),
+                        content: utf8ToBase64(JSON.stringify(currentArray, null, 2)),
+                        sha: indexData.sha
+                    })
+                });
+
+                statusEl.innerText = "[5/5] Creating Pull Request...";
+                await fetch(`https://api.github.com/repos/MCPE-Source/${type}/pulls`, {
+                    method: 'POST',
+                    headers: reqHeaders,
+                    body: JSON.stringify({
+                        title: (isEditMode ? `Update ${title}` : `Add ${title}`),
+                        head: `${userInfo.login}:main`,
+                        base: "main",
+                        body: `Pull request to ${isEditMode ? 'update' : 'add'} ${title}`
+                    })
+                });
+
+                statusEl.innerText = "Done! Pull Request successfully created.";
+                setTimeout(() => {
+                    document.getElementById('upload-form').reset();
+                    statusEl.innerText = "";
+                    if (isEditMode) window.location.href = 'profile.html';
+                }, 3000);
+
+            } catch (error) {
+                statusEl.innerText = `Error: ${error.message}`;
+            } finally {
+                btnSubmit.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | MCPE-Source</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('minecraft.ttf') format('truetype');
+        }
+        body {
+            background-image: url("bg.png") !important;
+            background-color: #1b1b1b !important;
+            color: #dcdcdc !important;
+        }
+        .navbar {
+            background-image: url("nav_bg.png") !important;
+            height: 48px !important;
+        }
+        .navbar-inverse .navbar-nav > .active > a {
+            background-color: transparent !important;
+            font-weight: bold;
+        }
+        .navbar-nav > .dropdown:hover > a, 
+        .navbar-nav > .dropdown.open > a {
+            background-color: transparent !important;
+        }
+        .navbar-toggle {
+            border-color: #ddd;
+        }
+        .navbar-toggle:hover,
+        .navbar-toggle:focus {
+            background-color: #333;
+        }
+        .navbar-toggle .icon-bar {
+            background-color: #ddd;
+        }
+        @media (max-width: 767px) {
+            .navbar-collapse {
+                background-color: rgba(34, 34, 34, 0.95) !important;
+                border-top: 1px solid #333;
+                margin-top: 10px;
+                padding: 0;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(2px);
+                -webkit-backdrop-filter: blur(2px);
+                z-index: 9999 !important;
+                position: relative;
+            }
+            .navbar-nav {
+                margin: 0;
+            }
+            .navbar-nav > li > a {
+                padding: 15px;
+                border-bottom: 1px solid #333;
+                background-color: rgba(34, 34, 34, 0.9) !important;
+            }
+            .navbar-nav > li > a:hover,
+            .navbar-nav > li > a:focus {
+                background-color: rgba(62, 52, 52, 0.9) !important;
+            }
+            .navbar-nav > li:last-child > a {
+                border-bottom: none;
+            }
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #555;
+        }
+        .suggest-content-btn {
+            color: #4caf50 !important;
+        }
+        code {
+            background-color: #333 !important;
+            color: #dcdcdc !important;
+        }
+        .hidden { display: none !important; }
+        .form-control { background-color: #333; color: #fff; border: 1px solid #555; }
+        .form-control:focus { background-color: #444; color: #fff; border-color: #888; }
+        .item-card { background-color: #222; border: 1px solid #444; border-radius: 4px; padding: 15px; margin-bottom: 20px; }
+        .item-thumb { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html"><img src="logo.png" width="150px"></a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="maps.html">Maps</a></li>
+                    <li><a href="mods.html">Mods</a></li>
+                    <li><a href="textures.html">Textures</a></li>
+                    <li><a href="plugins.html">Plugins</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="upload.html" class="suggest-content-btn">Upload Content</a></li>
+                    <li class="active"><a href="profile.html"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
+                    <li><a href="help.html">Help</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="auth-warning" class="alert alert-warning" style="background-color: #333; border-color: #555; color: #dcdcdc; margin-top: 20px;">
+            <h4>Authentication Required</h4>
+            <p>To view your profile, provide a GitHub Personal Access Token with <code>repo</code> scope. It is stored locally in your browser.</p>
+            <div class="form-group mt-2" style="margin-top: 15px;">
+                <input type="password" id="gh-token-input" class="form-control" placeholder="ghp_xxxxxxxxxxxx">
+            </div>
+            <button class="btn btn-info" onclick="saveToken()">Save Token</button>
+        </div>
+
+        <div id="profile-view" class="hidden">
+            <div style="background: #222; padding: 20px; border-radius: 4px; border: 1px solid #444; margin-top: 20px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    <img id="logged-user-avatar" src="" style="width: 60px; border-radius: 50%; margin-right: 20px;">
+                    <div>
+                        <h3 style="margin: 0;" id="logged-user-name"></h3>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-success" onclick="window.location.href='upload.html'">
+                        Upload Content
+                    </button>
+
+                    <button class="btn btn-danger" onclick="logout()">
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">My Content</h3><hr>
+            <div class="row" id="content-grid"></div>
+        </div>
+    </div>
+
+    <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden; display: block; margin-top: 40px;"></iframe>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        let githubToken = localStorage.getItem('gh_pat');
+        let userInfo = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+        });
+
+        async function checkAuth() {
+            if (githubToken) {
+                try {
+                    const res = await fetch('https://api.github.com/user', {
+                        headers: { 'Authorization': `token ${githubToken}` }
+                    });
+                    if (res.ok) {
+                        userInfo = await res.json();
+                        document.getElementById('logged-user-name').innerText = userInfo.login;
+                        document.getElementById('logged-user-avatar').src = userInfo.avatar_url;
+                        
+                        document.getElementById('auth-warning').classList.add('hidden');
+                        document.getElementById('profile-view').classList.remove('hidden');
+                        
+                        loadUserContent();
+                        return;
+                    }
+                } catch (e) {}
+            }
+            document.getElementById('auth-warning').classList.remove('hidden');
+            document.getElementById('profile-view').classList.add('hidden');
+        }
+
+        function saveToken() {
+            const val = document.getElementById('gh-token-input').value.trim();
+            if (val) {
+                localStorage.setItem('gh_pat', val);
+                githubToken = val;
+                checkAuth();
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('gh_pat');
+            githubToken = null;
+            userInfo = null;
+            document.getElementById('gh-token-input').value = '';
+            checkAuth();
+        }
+
+        async function loadUserContent() {
+            const types = ['maps', 'mods', 'textures', 'plugins'];
+            const grid = document.getElementById('content-grid');
+            grid.innerHTML = '<div class="col-md-12"><p>Loading content...</p></div>';
+            
+            let allItems = [];
+
+            for(const type of types) {
+                try {
+                    const res = await fetch(`https://raw.githubusercontent.com/MCPE-Source/${type}/main/${type}.json`);
+                    if(res.ok) {
+                        const data = await res.json();
+                        const userItems = data.filter(i => i.author && i.author.name === userInfo.login);
+                        allItems = allItems.concat(userItems.map(i => ({...i, repoType: type})));
+                    }
+                } catch(e) {}
+            }
+
+            grid.innerHTML = '';
+            if(allItems.length === 0) {
+                grid.innerHTML = '<div class="col-md-12"><p style="color: #aaa;">You have not uploaded any content yet.</p></div>';
+                return;
+            }
+
+            allItems.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+            allItems.forEach(item => {
+                const thumbUrl = item.thumbnail ? `https://raw.githubusercontent.com/MCPE-Source/${item.repoType}/main/${item.thumbnail}` : 'assets/images/no_thumbnail.png';
+                const div = document.createElement('div');
+                div.className = 'col-md-4 col-sm-6';
+                div.innerHTML = `
+                    <div class="item-card">
+                        <img src="${thumbUrl}" class="item-thumb" onerror="this.src='assets/images/no_thumbnail.png'">
+                        <h4 style="margin-top:0;">${item.title}</h4>
+                        <span class="label label-primary" style="text-transform: capitalize;">${item.repoType}</span>
+                        <span class="label label-default">v${item.version}</span>
+                        <p style="color: #aaa; margin-top: 10px; font-size: 13px; height: 40px; overflow: hidden;">${item.short_description || ''}</p>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn btn-sm btn-info" style="flex: 1;" onclick="editContent('${item.repoType}', '${item.title}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" style="flex: 1;" onclick="deleteContent('${item.repoType}', '${item.title}', this)">Delete</button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function editContent(type, title) {
+            window.location.href = `upload.html?edit=true&type=${type}&title=${encodeURIComponent(title)}`;
+        }
+
+        const utf8ToBase64 = (str) => window.btoa(unescape(encodeURIComponent(str)));
+        const base64ToUtf8 = (str) => decodeURIComponent(escape(window.atob(str)));
+
+        async function deleteContent(type, title, btn) {
+            if(!confirm(`Are you sure you want to delete ${title}?\nThis will create a Pull Request to remove it from the index.`)) return;
+
+            btn.disabled = true;
+            btn.innerText = 'Deleting...';
+
+            try {
+                const reqHeaders = {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                };
+
+                const forkRes = await fetch(`https://api.github.com/repos/MCPE-Source/${type}/forks`, {
+                    method: 'POST', headers: reqHeaders
+                });
+                const forkData = await forkRes.json();
+                const userRepo = forkData.full_name;
+                
+                await new Promise(r => setTimeout(r, 4000));
+
+                const indexUrl = `https://api.github.com/repos/${userRepo}/contents/${type}.json`;
+                const indexRes = await fetch(indexUrl, { headers: reqHeaders });
+                const indexData = await indexRes.json();
+                
+                const currentArray = JSON.parse(base64ToUtf8(indexData.content.replace(/\n/g, '')));
+                const newArray = currentArray.filter(i => i.title !== title);
+
+                await fetch(indexUrl, {
+                    method: 'PUT',
+                    headers: reqHeaders,
+                    body: JSON.stringify({
+                        message: `Delete ${title}`,
+                        content: utf8ToBase64(JSON.stringify(newArray, null, 2)),
+                        sha: indexData.sha
+                    })
+                });
+
+                await fetch(`https://api.github.com/repos/MCPE-Source/${type}/pulls`, {
+                    method: 'POST',
+                    headers: reqHeaders,
+                    body: JSON.stringify({
+                        title: `Delete ${title}`,
+                        head: `${userInfo.login}:main`,
+                        base: "main",
+                        body: `Delete ${title}`
+                    })
+                });
+
+                alert('Pull Request to delete content created successfully!');
+                loadUserContent();
+            } catch(e) {
+                alert('Error: ' + e.message);
+                btn.disabled = false;
+                btn.innerText = 'Delete';
+            }
+        }
+    </script>
+</body>
+</html>
