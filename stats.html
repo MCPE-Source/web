@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics | MCPE-Source</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .table, .table > tbody > tr > td, .table > tbody > tr > th, .table > thead > tr > th {
+            background-color: transparent !important;
+            background: transparent !important;
+            color: inherit;
+        }
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: transparent !important;
+        }
+        .table-hover > tbody > tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-inverse">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="index.html"><img src="logo.png" width="150px"></a>
+            </div>
+            <div class="collapse navbar-collapse" id="navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="maps.html">Maps</a></li>
+                    <li><a href="mods.html">Mods</a></li>
+                    <li><a href="textures.html">Textures</a></li>
+                    <li><a href="plugins.html">Plugins</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="upload.html" class="suggest-content-btn">Upload Content</a></li>
+                    <li><a href="profile.html"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
+                    <li><a href="help.html">Help</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>Statistics</h1>
+        <hr>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h3><b>Content Distribution</b></h3>
+                <div style="max-width: 400px; max-height: 400px;">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3><b>Content Count</b></h3>
+                <table class="table table-striped">
+                    <thead><tr><th>Type</th><th>Count</th><th>Percentage</th></tr></thead>
+                    <tbody id="stats-table"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h3><b>Top Contributors</b></h3>
+                <table class="table table-striped">
+                    <thead><tr><th>Author</th><th>Uploads</th></tr></thead>
+                    <tbody id="authors-table"></tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h3><b>Recent Activity</b></h3>
+                <table class="table table-striped">
+                    <thead><tr><th>Title</th><th>Date</th></tr></thead>
+                    <tbody id="recent-table"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <br><br><br>
+    <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden;"></iframe>
+    
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script>
+        async function loadData() {
+            const types = ['maps', 'mods', 'textures', 'plugins'];
+            let allItems = [];
+            let authors = {};
+            let stats = [];
+            let total = 0;
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+            for (let t of types) {
+                try {
+                    const res = await fetch(`https://raw.githubusercontent.com/MCPE-Source/${t}/main/${t}.json`);
+                    const data = await res.json();
+                    stats.push({ name: t, count: data.length });
+                    total += data.length;
+                    allItems = allItems.concat(data.map(item => ({...item, category: t})));
+                    
+                    data.forEach(item => {
+                        let name = typeof item.author === 'object' ? item.author.name : item.author;
+                        if (name) authors[name] = (authors[name] || 0) + 1;
+                    });
+                } catch(e) { stats.push({ name: t, count: 0 }); }
+            }
+
+            new Chart(document.getElementById('typeChart'), {
+                type: 'pie',
+                data: {
+                    labels: stats.map(s => s.name),
+                    datasets: [{ 
+                        data: stats.map(s => s.count), 
+                        backgroundColor: ['#5cb85c', '#5bc0de', '#f0ad4e', '#d9534f'] 
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            const statsTable = document.getElementById('stats-table');
+            stats.forEach(s => {
+                const percent = total > 0 ? ((s.count / total) * 100).toFixed(1) : 0;
+                statsTable.innerHTML += `<tr><td>${s.name.toUpperCase()}</td><td>${s.count}</td><td>${percent}%</td></tr>`;
+            });
+            statsTable.innerHTML += `<tr><td><strong>TOTAL</strong></td><td><strong>${total}</strong></td><td><strong>100%</strong></td></tr>`;
+
+            const authorTable = document.getElementById('authors-table');
+            Object.entries(authors).sort((a,b) => b[1] - a[1]).slice(0, 5).forEach(([name, count]) => {
+                authorTable.innerHTML += `<tr><td>${name}</td><td>${count}</td></tr>`;
+            });
+
+            const recentTable = document.getElementById('recent-table');
+            allItems.filter(item => item.date && new Date(item.date) >= thirtyDaysAgo)
+                    .sort((a,b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5)
+                    .forEach(item => {
+                        recentTable.innerHTML += `<tr><td>${item.title}</td><td>${item.date.split(' ')[0]}</td></tr>`;
+                    });
+        }
+        loadData();
+    </script>
+</body>
+</html>

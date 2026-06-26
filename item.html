@@ -6,6 +6,7 @@
     <title>Loading... | MCPE-Source</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body { background-color: #222; color: #eee; }
         
@@ -107,7 +108,7 @@
                 <ul class="nav navbar-nav navbar-right">
                     <li><a href="upload.html" class="suggest-content-btn">Upload Content</a></li>
                     <li><a href="profile.html"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
-                    <li><a href="android_app.html">Android app</a></li>
+                    <li><a href="help.html">Help</a></li>
                 </ul>
             </div>
         </div>
@@ -211,8 +212,7 @@
                     $('#main-version').text(item.version);
                     
                     let description = item.full_description || item.description || item.short_description || "No description provided.";
-                    description = description.replace(/\n/g, "<br>");
-                    $('#main-desc').html(description);
+                $('#main-desc').html(marked.parse(description));
                     
                     $('#info-version').text(item.version);
                     $('#info-date').text(item.date || "-");

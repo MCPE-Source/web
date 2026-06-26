@@ -151,8 +151,27 @@
             </div>
             <div class="form-group">
                 <label>Full Description</label>
+                <div class="btn-toolbar" style="margin-bottom: 10px;">
+                    <div class="btn-group btn-group-xs">
+                        <button type="button" class="btn btn-default" onclick="insertMD('**', '**')"><b>Bold</b></button>
+                        <button type="button" class="btn btn-default" onclick="insertMD('*', '*')"><i>Italic</i></button>
+                        <button type="button" class="btn btn-default" onclick="insertMD('`', '`')"><code>Code</code></button>
+                        <button type="button" class="btn btn-default" onclick="insertMD('- ', '')">List</button>
+                    </div>
+                </div>
                 <textarea class="form-control" id="up-full-desc" rows="5"></textarea>
             </div>
+
+            <script>
+            function insertMD(prefix, suffix) {
+                const area = document.getElementById('up-full-desc');
+                const start = area.selectionStart;
+                const end = area.selectionEnd;
+                const text = area.value;
+                area.value = text.substring(0, start) + prefix + text.substring(start, end) + suffix + text.substring(end);
+                area.focus();
+            }
+            </script>
             <div class="row">
                 <div class="col-md-6 form-group hidden" id="field-core">
                     <label>Core</label>
