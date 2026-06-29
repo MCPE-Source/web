@@ -84,7 +84,9 @@
             </div>
         </div>
 
+        <div class="pagination-wrapper text-center" style="margin-top: 10px; margin-bottom: 20px;"></div>
         <div class="row mod-row" id="modsList"></div>
+        <div class="pagination-wrapper text-center" style="margin-top: 30px; margin-bottom: 20px;"></div>
     </div>
 
     <br><br><br>
@@ -92,61 +94,53 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script>
+        (function() {
+            function updateNavbarProfile() {
+                var cachedName = localStorage.getItem('gh_username');
+                var cachedAvatar = localStorage.getItem('gh_avatar');
+                if (cachedName && cachedAvatar) {
+                    $('a[href="profile.html"]').html('<img src="' + cachedAvatar + '" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; object-fit: cover;"> <span>' + cachedName + '</span>');
+                } else {
+                    $('a[href="profile.html"]').html('<span class="glyphicon glyphicon-user"></span> Profile');
+                }
+            }
+            window.updateNavbarProfile = updateNavbarProfile;
+            $(document).ready(updateNavbarProfile);
+        })();
+    </script>
+    <script>
         $(document).ready(function() {
             var repo = 'mods';
             var baseUrl = 'https://raw.githubusercontent.com/MCPE-Source/' + repo + '/main/';
             var url = baseUrl + repo + '.json?t=' + new Date().getTime();
 
+            var allItems = [];
+            var filteredItems = [];
+            var currentPage = 1;
+            var itemsPerPage = 30;
+
             $.getJSON(url, function(data) {
-                var mappedData = data.map(function(item, index) {
+                allItems = data.map(function(item, index) {
                     return { item: item, originalIndex: index };
                 });
 
-                mappedData.sort(function(a, b) {
+                allItems.sort(function(a, b) {
                     var dateA = new Date(a.item.date ? a.item.date.replace(' ', 'T') : 0);
                     var dateB = new Date(b.item.date ? b.item.date.replace(' ', 'T') : 0);
                     return dateB - dateA;
                 });
 
-                var $container = $('#modsList');
                 var versions = new Set();
                 var modTypes = new Set();
 
-                $.each(mappedData, function(i, mapObj) {
+                allItems.forEach(function(mapObj) {
                     var mod = mapObj.item;
-                    var originalId = mapObj.originalIndex;
-
-                    if(mod.version) versions.add(mod.version);
-                    if(mod.mod_type) modTypes.add(mod.mod_type);
-                    
-                    var tagsHtml = '';
-                    if (mod.tags && mod.tags.length > 0) {
-                        mod.tags.forEach(function(tag) {
-                            tagsHtml += '<span class="label label-default">' + tag + '</span> ';
+                    if(mod.version) {
+                        mod.version.split(',').map(v => v.trim()).forEach(v => {
+                            if (v) versions.add(v);
                         });
                     }
-
-                    var imgSrc = 'assets/images/no_thumbnail.png';
-                    if (mod.thumbnail) {
-                         imgSrc = mod.thumbnail.startsWith('http') ? mod.thumbnail : baseUrl + mod.thumbnail;
-                    }
-                    
-                    var linkUrl = 'item.html?type=' + repo + '&id=' + originalId;
-                    var currentModType = mod.mod_type || "";
-
-                    var html = `
-                        <div class="col-sm-6 col-md-4 mod-item">
-                            <a href="${linkUrl}" class="mod-card" data-version="${mod.version}" data-modtype="${currentModType}">
-                                <img src="${imgSrc}" alt="${mod.title}">
-                                <div class="caption">
-                                    <h3>${mod.title} <small>${mod.version}</small></h3>
-                                    <p>${mod.short_description || mod.description || ''}</p>
-                                    <div class="tags-container">${tagsHtml}</div>
-                                </div>
-                            </a>
-                        </div>
-                    `;
-                    $container.append(html);
+                    if(mod.mod_type) modTypes.add(mod.mod_type);
                 });
 
                 var $verSelect = $('#versionSelect');
@@ -155,27 +149,134 @@
                 Array.from(versions).sort().reverse().forEach(v => $verSelect.append('<option value="' + v + '">' + v + '</option>'));
                 Array.from(modTypes).sort().forEach(t => $typeSelect.append('<option value="' + t + '">' + t + '</option>'));
 
+                function renderPage() {
+                    var $container = $('#modsList');
+                    $container.empty();
+
+                    var startIndex = (currentPage - 1) * itemsPerPage;
+                    var endIndex = startIndex + itemsPerPage;
+                    var pageItems = filteredItems.slice(startIndex, endIndex);
+
+                    pageItems.forEach(function(mapObj) {
+                        var mod = mapObj.item;
+                        var originalId = mapObj.originalIndex;
+
+                        var tagsHtml = '';
+                        if (mod.tags && mod.tags.length > 0) {
+                            mod.tags.forEach(function(tag) {
+                                tagsHtml += '<span class="label label-default">' + tag + '</span> ';
+                            });
+                        }
+
+                        var imgSrc = 'assets/images/no_thumbnail.png';
+                        if (mod.thumbnail) {
+                             imgSrc = mod.thumbnail.startsWith('http') ? mod.thumbnail : baseUrl + mod.thumbnail;
+                        }
+                        
+                        var linkUrl = 'item.html?type=' + repo + '&id=' + originalId;
+                        var modTypeHtml = mod.mod_type ? `<div style="margin-bottom: 8px;"><span class="label label-info">${mod.mod_type}</span></div>` : '';
+
+                        var html = `
+                            <div class="col-sm-6 col-md-4 mod-item">
+                                <a href="${linkUrl}" class="mod-card">
+                                    <img src="${imgSrc}" alt="${mod.title}">
+                                    <div class="caption">
+                                        <h3>${mod.title} <span class="version-badge">${mod.version}</span></h3>
+                                        ${modTypeHtml}
+                                        <p>${mod.short_description || mod.description || ''}</p>
+                                        <div class="tags-container">${tagsHtml}</div>
+                                    </div>
+                                </a>
+                            </div>
+                        `;
+                        $container.append(html);
+                    });
+
+                    renderPagination();
+                }
+
+                function renderPagination() {
+                    var $pagWrappers = $('.pagination-wrapper');
+                    $pagWrappers.empty();
+
+                    var totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+                    if (totalPages <= 1) {
+                        return;
+                    }
+
+                    var $ul = $('<ul class="pagination"></ul>');
+
+                    var $prevLi = $('<li class="' + (currentPage === 1 ? 'disabled' : '') + '"><a href="#">&laquo;</a></li>');
+                    if (currentPage > 1) {
+                        $prevLi.find('a').on('click', function(e) {
+                            e.preventDefault();
+                            currentPage--;
+                            renderPage();
+                            $('html, body').animate({ scrollTop: 0 }, 'fast');
+                        });
+                    } else {
+                        $prevLi.find('a').on('click', function(e) { e.preventDefault(); });
+                    }
+                    $ul.append($prevLi);
+
+                    for (var p = 1; p <= totalPages; p++) {
+                        (function(page) {
+                            var $li = $('<li class="' + (currentPage === page ? 'active' : '') + '"><a href="#">' + page + '</a></li>');
+                            $li.find('a').on('click', function(e) {
+                                e.preventDefault();
+                                currentPage = page;
+                                renderPage();
+                                $('html, body').animate({ scrollTop: 0 }, 'fast');
+                            });
+                            $ul.append($li);
+                        })(p);
+                    }
+
+                    var $nextLi = $('<li class="' + (currentPage === totalPages ? 'disabled' : '') + '"><a href="#">&raquo;</a></li>');
+                    if (currentPage < totalPages) {
+                        $nextLi.find('a').on('click', function(e) {
+                            e.preventDefault();
+                            currentPage++;
+                            renderPage();
+                            $('html, body').animate({ scrollTop: 0 }, 'fast');
+                        });
+                    } else {
+                        $nextLi.find('a').on('click', function(e) { e.preventDefault(); });
+                    }
+                    $ul.append($nextLi);
+
+                    $pagWrappers.each(function() {
+                        $(this).append($ul.clone(true));
+                    });
+                }
+
                 function filterMods() {
                     var searchText = $('#searchInput').val().toLowerCase();
                     var activeVer = $('#versionSelect').val();
                     var activeType = $('#typeSelect').val();
 
-                    $('.mod-item').each(function() {
-                        var $el = $(this);
-                        var $card = $el.find('.mod-card');
-                        var fullText = $card.find('h3').text().toLowerCase() + " " + $card.find('p').text().toLowerCase();
-                        var itemVer = $card.attr('data-version');
-                        var itemType = $card.attr('data-modtype');
+                    filteredItems = allItems.filter(function(mapObj) {
+                        var mod = mapObj.item;
+                        var fullText = (mod.title || '').toLowerCase() + " " + (mod.short_description || mod.description || '').toLowerCase();
+                        var itemVer = mod.version || "";
+                        var itemVersions = itemVer.split(',').map(v => v.trim());
+                        var itemType = mod.mod_type || "";
 
                         var matchSearch = fullText.indexOf(searchText) > -1;
-                        var matchVer = !activeVer || itemVer === activeVer;
+                        var matchVer = !activeVer || itemVersions.includes(activeVer);
                         var matchType = !activeType || itemType === activeType;
 
-                        if (matchSearch && matchVer && matchType) $el.show(); else $el.hide();
+                        return matchSearch && matchVer && matchType;
                     });
+
+                    currentPage = 1;
+                    renderPage();
                 }
+
                 $('#searchInput').on('input keyup', filterMods);
                 $('#versionSelect, #typeSelect').on('change', filterMods);
+
+                filterMods();
             });
         });
     </script>

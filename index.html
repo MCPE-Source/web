@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +12,7 @@
             background-color: #333 !important;
             color: #dcdcdc !important;
         }
-    
+
         .content-box {
             position: relative;
             overflow: hidden;
@@ -43,12 +44,15 @@
         #maps-box::before {
             background-image: url('assets/images/nav_maps.png');
         }
+
         #mods-box::before {
             background-image: url('assets/images/nav_mods.png');
         }
+
         #textures-box::before {
             background-image: url('assets/images/nav_textures.jpg');
         }
+
         #plugins-box::before {
             background-image: url('assets/images/nav_plugins.png');
         }
@@ -70,13 +74,131 @@
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
+
+        .mod-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-left: -5px;
+            margin-right: -5px;
+        }
+
+        .mod-card {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            text-decoration: none !important;
+            color: #dcdcdc;
+            background-color: rgba(43, 43, 43, 0.75);
+            -webkit-backdrop-filter: blur(5px);
+            backdrop-filter: blur(5px);
+            border: 1px solid #444;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .mod-card:hover,
+        .mod-card:focus {
+            color: #ffffff;
+            background-color: rgba(60, 60, 60, 0.9);
+            border-color: #777;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .mod-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            background-color: #1a1a1a;
+        }
+
+        .mod-card .caption {
+            padding: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mod-card h3 {
+            color: #ffffff;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 18px;
+            line-height: 1.2;
+        }
+
+        .mod-card h3 small {
+            color: #bbbbbb;
+            margin-left: 5px;
+            font-size: 70%;
+        }
+
+        .mod-card p {
+            color: #cccccc;
+            flex-grow: 1;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .tags-container {
+            margin-top: auto;
+        }
+
+        .mod-card .label-default {
+            background-color: #555;
+            font-size: 10px;
+            border: 1px solid #666;
+            margin-right: 2px;
+            display: inline-block;
+            margin-bottom: 2px;
+            padding: 3px 6px;
+        }
+
+        .search-area {
+            background-color: rgba(30, 30, 30, 0.55);
+            padding: 25px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #444;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .search-area .form-control {
+            background-color: #222;
+            border: 1px solid #555;
+            color: #fff;
+            height: 46px;
+            font-size: 15px;
+            border-radius: 4px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .search-area .form-control:focus {
+            border-color: #888;
+            background-color: #2a2a2a;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .search-area h3 {
+            font-size: 24px;
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-inverse">
         <div class="container">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#navbar-collapse" aria-expanded="false">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
@@ -102,7 +224,8 @@
     </nav>
     <div class="container">
         <h1>MCPE-Source</h1>
-        <h4>Minecraft PE Alpha content</h4><hr>
+        <h4>Minecraft PE Alpha content</h4>
+        <hr>
         <h3>Explore</h3>
         <div class="row">
             <div class="col-sm-6 col-md-3">
@@ -126,10 +249,159 @@
                 </a>
             </div>
         </div>
+
+        <div class="search-area">
+            <h3>Global Search</h3>
+            <div class="row">
+                <div class="col-sm-8" style="margin-bottom: 15px;">
+                    <input type="text" id="globalSearchInput" class="form-control"
+                        placeholder="Search across all storage...">
+                </div>
+                <div class="col-sm-4" style="margin-bottom: 15px;">
+                    <select id="globalVersionSelect" class="form-control">
+                        <option value="">All Versions</option>
+                    </select>
+                </div>
+            </div>
+            <div id="globalSearchStatus"
+                style="color: #aaa; margin-top: 5px; margin-bottom: 15px; font-size: 14px; display: none;"></div>
+            <div class="row mod-row" id="globalSearchResults" style="margin-top: 10px;"></div>
+        </div>
     </div>
     <br><br><br>
     <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden;"></iframe>
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+        (function () {
+            function updateNavbarProfile() {
+                var cachedName = localStorage.getItem('gh_username');
+                var cachedAvatar = localStorage.getItem('gh_avatar');
+                if (cachedName && cachedAvatar) {
+                    $('a[href="profile.html"]').html('<img src="' + cachedAvatar + '" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; object-fit: cover;"> <span>' + cachedName + '</span>');
+                } else {
+                    $('a[href="profile.html"]').html('<span class="glyphicon glyphicon-user"></span> Profile');
+                }
+            }
+            window.updateNavbarProfile = updateNavbarProfile;
+            $(document).ready(updateNavbarProfile);
+        })();
+    </script>
+    <script>
+        $(document).ready(function () {
+            var categories = ['maps', 'mods', 'textures', 'plugins'];
+            var allItems = [];
+            var versions = new Set();
+
+            $('#globalSearchStatus').text('Loading databases...').show();
+
+            var fetchPromises = categories.map(function (cat) {
+                var url = 'https://raw.githubusercontent.com/MCPE-Source/' + cat + '/main/' + cat + '.json?t=' + new Date().getTime();
+                var d = $.Deferred();
+                $.getJSON(url, function (data) {
+                    data.forEach(function (item, index) {
+                        item.repoType = cat;
+                        item.originalIndex = index;
+                        allItems.push(item);
+
+                        if (item.version) {
+                            item.version.split(',').map(function (v) { return v.trim(); }).forEach(function (v) {
+                                if (v) versions.add(v);
+                            });
+                        }
+                    });
+                    d.resolve();
+                }).fail(function (err) {
+                    console.error('Failed to load ' + cat + ' database', err);
+                    d.resolve();
+                });
+                return d.promise();
+            });
+
+            $.when.apply($, fetchPromises).then(function () {
+                $('#globalSearchStatus').hide();
+
+                allItems.sort(function (a, b) {
+                    var dateA = new Date(a.date ? a.date.replace(' ', 'T') : 0);
+                    var dateB = new Date(b.date ? b.date.replace(' ', 'T') : 0);
+                    return dateB - dateA;
+                });
+
+                var sortedVersions = Array.from(versions).sort(function (a, b) {
+                    return b.localeCompare(a, undefined, { numeric: true, sensitivity: 'base' });
+                });
+                var $verSelect = $('#globalVersionSelect');
+                sortedVersions.forEach(function (ver) {
+                    $verSelect.append($('<option>', { value: ver, text: ver }));
+                });
+
+                $('#globalSearchInput').on('input keyup', performSearch);
+                $('#globalVersionSelect').on('change', performSearch);
+
+                performSearch();
+            });
+
+            function performSearch() {
+                var searchText = $('#globalSearchInput').val().toLowerCase().trim();
+                var activeVer = $('#globalVersionSelect').val();
+                var $results = $('#globalSearchResults');
+                $results.empty();
+
+                if (searchText === "" && !activeVer) {
+                    return;
+                }
+
+                var matches = allItems.filter(function (item) {
+                    var fullText = (item.title || '').toLowerCase() + " " + (item.short_description || item.description || '').toLowerCase();
+                    var matchSearch = fullText.indexOf(searchText) > -1;
+
+                    var itemVer = item.version || "";
+                    var itemVersions = itemVer.split(',').map(function (v) { return v.trim(); });
+                    var matchVer = !activeVer || itemVersions.includes(activeVer);
+
+                    return matchSearch && matchVer;
+                });
+
+                if (matches.length === 0) {
+                    $results.html('<div class="col-xs-12 text-center" style="color: #aaa; padding: 20px;">No results found.</div>');
+                    return;
+                }
+
+                var limit = Math.min(matches.length, 24);
+                for (var i = 0; i < limit; i++) {
+                    var item = matches[i];
+                    var itemBaseUrl = 'https://raw.githubusercontent.com/MCPE-Source/' + item.repoType + '/main/';
+                    var imgSrc = item.thumbnail ? (item.thumbnail.startsWith('http') ? item.thumbnail : itemBaseUrl + item.thumbnail) : 'assets/images/no_thumbnail.png';
+                    var linkUrl = 'item.html?type=' + item.repoType + '&id=' + item.originalIndex;
+
+                    var tagsHtml = '';
+                    if (item.tags && item.tags.length > 0) {
+                        tagsHtml = item.tags.slice(0, 3).map(function (tag) {
+                            return `<span class="label label-default" style="text-transform: capitalize;">${tag}</span>`;
+                        }).join(' ');
+                    }
+
+                    var categoryBadge = `<span class="label label-info" style="text-transform: capitalize; margin-right: 5px; background-color: #5bc0de !important; color: #000 !important;">${item.repoType}</span>`;
+
+                    $results.append(`
+                        <div class="col-md-4 col-sm-6" style="margin-bottom: 20px; display: flex;">
+                            <a href="${linkUrl}" class="mod-card">
+                                <img src="${imgSrc}" alt="${item.title}" onerror="this.src='assets/images/no_thumbnail.png'">
+                                <div class="caption">
+                                    <h3>${item.title} <span class="version-badge">${item.version || ''}</span></h3>
+                                    <p>${item.short_description || item.description || ''}</p>
+                                    <div class="tags-container">
+                                        ${categoryBadge}
+                                        ${tagsHtml}
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    `);
+                }
+            }
+        });
+    </script>
 </body>
+
 </html>

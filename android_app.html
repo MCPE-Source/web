@@ -46,5 +46,20 @@
     <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden;"></iframe>
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+        (function() {
+            function updateNavbarProfile() {
+                var cachedName = localStorage.getItem('gh_username');
+                var cachedAvatar = localStorage.getItem('gh_avatar');
+                if (cachedName && cachedAvatar) {
+                    $('a[href="profile.html"]').html('<img src="' + cachedAvatar + '" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; object-fit: cover;"> <span>' + cachedName + '</span>');
+                } else {
+                    $('a[href="profile.html"]').html('<span class="glyphicon glyphicon-user"></span> Profile');
+                }
+            }
+            window.updateNavbarProfile = updateNavbarProfile;
+            $(document).ready(updateNavbarProfile);
+        })();
+    </script>
 </body>
 </html>

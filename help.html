@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,13 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <nav class="navbar navbar-inverse">
         <div class="container">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#navbar-collapse" aria-expanded="false">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
@@ -40,19 +43,38 @@
         <h1>Help</h1>
         <br>
         <h3><b>How to upload content</b></h3>
-        <p>Use the <a href="upload.html">Upload</a> page to upload content, or use the <a href="android_app.html">Android app</a>.</p>
+        <p>Use the <a href="upload.html">Upload</a> page to upload content, or use the <a
+                href="android_app.html">Android app</a>.</p>
         <br>
         <h3><b>Where can I find the source code of Android / other platform version of MCPE-Source?</b></h3>
         <p>You can find the MCPE-Source source code on <a href="https://github.com/MCPE-Source">our GitHub</a>.</p>
 
-        <br><hr><h2>Platform</h2><br>
-        <a href="stats.html" class="btn btn-primary" target="_blank" style="width: 250px;">Statistics</a>
-        
+        <br>
+        <hr>
+        <h2>Platform</h2><br>
+        <a href="stats.html" class="btn btn-primary" style="width: 250px;">Statistics</a>
+
     </div>
 
     <br><br><br>
     <iframe src="footer.html" style="width: 100%; height: 40px; border: none; overflow: hidden;"></iframe>
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+        (function () {
+            function updateNavbarProfile() {
+                var cachedName = localStorage.getItem('gh_username');
+                var cachedAvatar = localStorage.getItem('gh_avatar');
+                if (cachedName && cachedAvatar) {
+                    $('a[href="profile.html"]').html('<img src="' + cachedAvatar + '" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; object-fit: cover;"> <span>' + cachedName + '</span>');
+                } else {
+                    $('a[href="profile.html"]').html('<span class="glyphicon glyphicon-user"></span> Profile');
+                }
+            }
+            window.updateNavbarProfile = updateNavbarProfile;
+            $(document).ready(updateNavbarProfile);
+        })();
+    </script>
 </body>
+
 </html>

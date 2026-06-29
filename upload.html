@@ -232,6 +232,21 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script>
+        (function() {
+            function updateNavbarProfile() {
+                var cachedName = localStorage.getItem('gh_username');
+                var cachedAvatar = localStorage.getItem('gh_avatar');
+                if (cachedName && cachedAvatar) {
+                    $('a[href="profile.html"]').html('<img src="' + cachedAvatar + '" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; object-fit: cover;"> <span>' + cachedName + '</span>');
+                } else {
+                    $('a[href="profile.html"]').html('<span class="glyphicon glyphicon-user"></span> Profile');
+                }
+            }
+            window.updateNavbarProfile = updateNavbarProfile;
+            $(document).ready(updateNavbarProfile);
+        })();
+    </script>
+    <script>
         let githubToken = localStorage.getItem('gh_pat');
         let userInfo = null;
         let isEditMode = false;
@@ -303,6 +318,9 @@
                     });
                     if (res.ok) {
                         userInfo = await res.json();
+                        localStorage.setItem('gh_username', userInfo.login);
+                        localStorage.setItem('gh_avatar', userInfo.avatar_url);
+                        if (window.updateNavbarProfile) window.updateNavbarProfile();
                         document.getElementById('logged-user-name').innerText = userInfo.login;
                         document.getElementById('auth-warning').classList.add('hidden');
                         document.getElementById('auth-success').classList.remove('hidden');
@@ -311,6 +329,9 @@
                     }
                 } catch (e) {}
             }
+            localStorage.removeItem('gh_username');
+            localStorage.removeItem('gh_avatar');
+            if (window.updateNavbarProfile) window.updateNavbarProfile();
             document.getElementById('auth-warning').classList.remove('hidden');
             document.getElementById('auth-success').classList.add('hidden');
             document.getElementById('upload-form').classList.add('hidden');
@@ -327,9 +348,12 @@
 
         function logout() {
             localStorage.removeItem('gh_pat');
+            localStorage.removeItem('gh_username');
+            localStorage.removeItem('gh_avatar');
             githubToken = null;
             userInfo = null;
             document.getElementById('gh-token-input').value = '';
+            if (window.updateNavbarProfile) window.updateNavbarProfile();
             checkAuth();
         }
 

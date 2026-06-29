@@ -131,7 +131,7 @@
                     </div>
                 </div>
                 
-                <div style="display: flex; gap: 10px;">
+                <div id="profile-actions" style="display: flex; gap: 10px;">
                     <button class="btn btn-success" onclick="window.location.href='upload.html'">
                         Upload Content
                     </button>
@@ -142,7 +142,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 40px;">My Content</h3><hr>
+            <h3 style="margin-top: 40px;" id="profile-content-title">My Content</h3><hr>
             <div class="row" id="content-grid"></div>
         </div>
     </div>
@@ -152,6 +152,21 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script>
+        (function() {
+            function updateNavbarProfile() {
+                var cachedName = localStorage.getItem('gh_username');
+                var cachedAvatar = localStorage.getItem('gh_avatar');
+                if (cachedName && cachedAvatar) {
+                    $('a[href="profile.html"]').html('<img src="' + cachedAvatar + '" style="width: 20px; height: 20px; border-radius: 50%; vertical-align: middle; margin-right: 5px; object-fit: cover;"> <span>' + cachedName + '</span>');
+                } else {
+                    $('a[href="profile.html"]').html('<span class="glyphicon glyphicon-user"></span> Profile');
+                }
+            }
+            window.updateNavbarProfile = updateNavbarProfile;
+            $(document).ready(updateNavbarProfile);
+        })();
+    </script>
+    <script>
         let githubToken = localStorage.getItem('gh_pat');
         let userInfo = null;
 
@@ -160,6 +175,36 @@
         });
 
         async function checkAuth() {
+            const params = new URLSearchParams(window.location.search);
+            const targetUser = params.get('user');
+
+            if (targetUser) {
+                document.title = `${targetUser}'s Profile | MCPE-Source`;
+                document.getElementById('logged-user-name').innerText = targetUser;
+                document.getElementById('logged-user-avatar').src = "assets/images/no_thumbnail.png";
+                document.getElementById('auth-warning').classList.add('hidden');
+                document.getElementById('profile-view').classList.remove('hidden');
+                document.getElementById('profile-actions').classList.add('hidden');
+                document.getElementById('profile-content-title').innerText = `${targetUser}'s Content`;
+                
+                try {
+                    const headers = githubToken ? { 'Authorization': `token ${githubToken}` } : {};
+                    const userRes = await fetch(`https://api.github.com/users/${targetUser}`, { headers });
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        if (userData.avatar_url) {
+                            document.getElementById('logged-user-avatar').src = userData.avatar_url;
+                        }
+                    }
+                } catch (e) {}
+                
+                loadUserContent(targetUser);
+                return;
+            }
+
+            document.getElementById('profile-actions').classList.remove('hidden');
+            document.getElementById('profile-content-title').innerText = 'My Content';
+
             if (githubToken) {
                 try {
                     const res = await fetch('https://api.github.com/user', {
@@ -167,17 +212,23 @@
                     });
                     if (res.ok) {
                         userInfo = await res.json();
+                        localStorage.setItem('gh_username', userInfo.login);
+                        localStorage.setItem('gh_avatar', userInfo.avatar_url);
+                        if (window.updateNavbarProfile) window.updateNavbarProfile();
                         document.getElementById('logged-user-name').innerText = userInfo.login;
                         document.getElementById('logged-user-avatar').src = userInfo.avatar_url;
                         
                         document.getElementById('auth-warning').classList.add('hidden');
                         document.getElementById('profile-view').classList.remove('hidden');
                         
-                        loadUserContent();
+                        loadUserContent(userInfo.login);
                         return;
                     }
                 } catch (e) {}
             }
+            localStorage.removeItem('gh_username');
+            localStorage.removeItem('gh_avatar');
+            if (window.updateNavbarProfile) window.updateNavbarProfile();
             document.getElementById('auth-warning').classList.remove('hidden');
             document.getElementById('profile-view').classList.add('hidden');
         }
@@ -193,13 +244,16 @@
 
         function logout() {
             localStorage.removeItem('gh_pat');
+            localStorage.removeItem('gh_username');
+            localStorage.removeItem('gh_avatar');
             githubToken = null;
             userInfo = null;
             document.getElementById('gh-token-input').value = '';
+            if (window.updateNavbarProfile) window.updateNavbarProfile();
             checkAuth();
         }
 
-        async function loadUserContent() {
+        async function loadUserContent(username) {
             const types = ['maps', 'mods', 'textures', 'plugins'];
             const grid = document.getElementById('content-grid');
             grid.innerHTML = '<div class="col-md-12"><p>Loading content...</p></div>';
@@ -211,7 +265,11 @@
                     const res = await fetch(`https://raw.githubusercontent.com/MCPE-Source/${type}/main/${type}.json`);
                     if(res.ok) {
                         const data = await res.json();
-                        const userItems = data.filter(i => i.author && i.author.name === userInfo.login);
+                        const userItems = data.map((item, index) => ({...item, originalIndex: index})).filter(i => {
+                            if (!i.author) return false;
+                            const authorName = (typeof i.author === 'object') ? i.author.name : i.author;
+                            return authorName && authorName.toLowerCase() === username.toLowerCase();
+                        });
                         allItems = allItems.concat(userItems.map(i => ({...i, repoType: type})));
                     }
                 } catch(e) {}
@@ -219,16 +277,41 @@
 
             grid.innerHTML = '';
             if(allItems.length === 0) {
-                grid.innerHTML = '<div class="col-md-12"><p style="color: #aaa;">You have not uploaded any content yet.</p></div>';
+                grid.innerHTML = '<div class="col-md-12"><p style="color: #aaa;">No content uploaded yet.</p></div>';
                 return;
             }
 
             allItems.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
+            const params = new URLSearchParams(window.location.search);
+            const isOtherUser = params.has('user');
+
             allItems.forEach(item => {
                 const thumbUrl = item.thumbnail ? `https://raw.githubusercontent.com/MCPE-Source/${item.repoType}/main/${item.thumbnail}` : 'assets/images/no_thumbnail.png';
+                
+                if (isOtherUser && item.author && typeof item.author === 'object' && item.author.avatar) {
+                    document.getElementById('logged-user-avatar').src = item.author.avatar;
+                }
+
                 const div = document.createElement('div');
                 div.className = 'col-md-4 col-sm-6';
+                
+                let buttonsHtml = '';
+                if (!isOtherUser) {
+                    buttonsHtml = `
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn btn-sm btn-info" style="flex: 1;" onclick="editContent('${item.repoType}', '${item.title}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" style="flex: 1;" onclick="deleteContent('${item.repoType}', '${item.title}', this)">Delete</button>
+                        </div>
+                    `;
+                } else {
+                    buttonsHtml = `
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <a class="btn btn-sm btn-primary" style="flex: 1;" href="item.html?type=${item.repoType}&id=${item.originalIndex}">View</a>
+                        </div>
+                    `;
+                }
+
                 div.innerHTML = `
                     <div class="item-card">
                         <img src="${thumbUrl}" class="item-thumb" onerror="this.src='assets/images/no_thumbnail.png'">
@@ -236,10 +319,7 @@
                         <span class="label label-primary" style="text-transform: capitalize;">${item.repoType}</span>
                         <span class="label label-default">v${item.version}</span>
                         <p style="color: #aaa; margin-top: 10px; font-size: 13px; height: 40px; overflow: hidden;">${item.short_description || ''}</p>
-                        <div style="margin-top: 15px; display: flex; gap: 10px;">
-                            <button class="btn btn-sm btn-info" style="flex: 1;" onclick="editContent('${item.repoType}', '${item.title}')">Edit</button>
-                            <button class="btn btn-sm btn-danger" style="flex: 1;" onclick="deleteContent('${item.repoType}', '${item.title}', this)">Delete</button>
-                        </div>
+                        ${buttonsHtml}
                     </div>
                 `;
                 grid.appendChild(div);

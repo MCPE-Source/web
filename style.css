@@ -112,3 +112,45 @@ code {
 .label-info {
     color: black !important;
 }
+
+.version-badge {
+    background-color: #555;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    display: inline-block;
+    margin-left: 5px;
+    vertical-align: middle;
+    border: 1px solid #777;
+}
+
+.pagination > li > a, .pagination > li > span {
+    background-color: rgba(30, 30, 30, 0.75);
+    border: 1px solid #444;
+    color: #dcdcdc;
+    transition: all 0.2s ease;
+}
+
+.pagination > li > a:hover, .pagination > li > a:focus,
+.pagination > li > span:hover, .pagination > li > span:focus {
+    background-color: rgba(60, 60, 60, 0.9);
+    border-color: #666;
+    color: #fff;
+}
+
+.pagination > .active > a, .pagination > .active > span,
+.pagination > .active > a:hover, .pagination > .active > span:hover,
+.pagination > .active > a:focus, .pagination > .active > span:focus {
+    background-color: #555 !important;
+    border-color: #777 !important;
+    color: #fff !important;
+}
+
+.pagination > .disabled > a, .pagination > .disabled > span,
+.pagination > .disabled > a:hover, .pagination > .disabled > span:hover,
+.pagination > .disabled > a:focus, .pagination > .disabled > span:focus {
+    background-color: rgba(20, 20, 20, 0.5) !important;
+    border-color: #333 !important;
+    color: #666 !important;
+}
